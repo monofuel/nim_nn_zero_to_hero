@@ -1,11 +1,11 @@
-import std/[math, strformat]
+import std/[math, sets, hashes, strformat]
 
 # Micrograd Engine
 
 type Value* = ref object
   data*: float
   grad*: float = 0
-  #backward: proc ()
+  backward: proc () = proc() = discard # dummy default backward implementation
   prev: seq[Value]
   op: string
 
@@ -74,3 +74,23 @@ proc `/`*(self, other: Value): Value =
     prev: @[self, other],
     op: "/"
   )
+
+proc hash(x: Value): Hash =
+  # Value is a ref object, assume uniqueness based on address
+  hash(cast[int](x))
+
+proc buildTopo(v: Value, topo: var seq[Value], visited: var HashSet[Value]) =
+  if v notin visited:
+    visited.incl(v)
+    for child in v.prev:
+      buildTopo(child, topo, visited)
+    topo.add v
+
+proc backward*(self: Value) =
+  var topo: seq[Value] = @[]
+  var visited = initHashSet[Value]()
+  buildTopo(self, topo, visited)
+
+  self.grad = 1.0
+  for i in countdown(high(topo), 0):
+    topo[i].backward()

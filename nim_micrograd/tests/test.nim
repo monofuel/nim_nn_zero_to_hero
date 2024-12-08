@@ -42,7 +42,7 @@ g += 10.0 / f
 assert &"{g.data:.4f}" == "24.7041"
 echo &"g.data = {g.data:.4f}" # prints 24.7041, the outcome of this forward pass
 
-# g.backward()
+g.backward()
 
 assert &"{a.grad:.4f}" == "138.8338"
 assert &"{b.grad:.4f}" == "645.5773"
