@@ -57,6 +57,15 @@ proc relu*(self: Value): Value =
 proc `/`*(self, other: Value): Value =
   result = self * other.pow(-1)
 
+proc tanh*(self: Value): Value =
+  let x = self.data
+  let t = (math.exp(2 * x) - 1) / (math.exp(2 * x) + 1)
+  result = Value(
+    data: t,
+    prev: @[self],
+    op: "tanh"
+  )
+
 proc hash(x: Value): Hash =
   # Value is a ref object, assume uniqueness based on address
   hash(cast[int](x))
@@ -94,6 +103,10 @@ proc selfbackward*(res: Value) =
   of "relu":
     var self = res.prev[0]
     self.grad = self.grad + (if res.data > 0: res.grad else: 0)
+  of "tanh":
+    var self = res.prev[0]
+    self.grad = self.grad + (1 - res.data * res.data) * res.grad
+
   of "":
     # scalar value, do nothing
     discard 
