@@ -5,7 +5,6 @@ import std/[math, sets, hashes, strformat]
 type Value* = ref object
   data*: float
   grad*: float = 0
-  backward: proc () = proc() = discard # dummy default backward implementation
   prev: seq[Value]
   op: string
 
@@ -28,9 +27,6 @@ proc `+`*(self, other: Value): Value =
     op: "+"
   )
 
-proc `+=`*(self: var Value, other: Value) =
-  self.data += other.data
-
 proc `*`*(self, other: Value): Value =
   result = Value(
     data: self.data * other.data,
@@ -38,32 +34,22 @@ proc `*`*(self, other: Value): Value =
     op: "*"
   )
 
-
 proc `pow`*(self, other: Value): Value =
   result = Value(
     data: self.data.pow(other.data),
     prev: @[self, other],
     op: "pow"
-  )
-
-
-proc `-`*(self, other: Value): Value =
-  result = Value(
-    data: self.data - other.data,
-    prev: @[self, other],
-    op: "-"
-  )
+  )  
 
 proc `-`*(self: Value): Value =
-  result = Value(
-    data: -self.data,
-    prev: @[self],
-    op: "-"
-  )
+  result = self * -1
+
+proc `-`*(self, other: Value): Value =
+  result = self + (-other)
 
 proc relu*(self: Value): Value =
   result = Value(
-    data: if self.data > 0: self.data else: 0,
+    data: if self.data < 0: 0 else: self.data,
     prev: @[self],
     op: "relu"
   )
@@ -86,6 +72,49 @@ proc buildTopo(v: Value, topo: var seq[Value], visited: var HashSet[Value]) =
       buildTopo(child, topo, visited)
     topo.add v
 
+proc selfbackward*(res: Value) =
+  # backward pass for just the current node
+  case res.op:
+  of "+":
+    var
+      self = res.prev[0]
+      other = res.prev[1]
+    self.grad += res.grad
+    other.grad += res.grad
+  of "-":
+    # negate, does not affect gradient
+    discard
+  of "*":
+    var
+      self = res.prev[0]
+      other = res.prev[1]
+    self.grad += other.data * res.grad
+    other.grad += self.data * res.grad
+  of "/":
+    var
+      self = res.prev[0]
+      other = res.prev[1]
+    self.grad += res.grad / other.data
+    other.grad += -self.data * res.grad / other.data / other.data
+  of "pow":
+    var
+      self = res.prev[0]
+      other = res.prev[1]
+    #self.grad += other.data * self.data.pow(other.data - 1) * res.grad
+    #self.grad += (other * self.data**(other-1)) * out.grad
+    self.grad += (other.data * self.data.pow(other.data - 1)) * res.grad
+    
+    # TODO: micrograd did not have this `other` line, but chatgpt suggests it.
+    #other.grad += self.data.pow(other.data) * log(self.data) * res.grad
+  of "relu":
+    var self = res.prev[0]
+    self.grad = self.grad + (if res.data > 0: res.grad else: 0)
+  of "":
+    # scalar value, do nothing
+    discard 
+  else:
+    raise newException(ValueError, "unknown op for backward: " & res.op)
+
 proc backward*(self: Value) =
   var topo: seq[Value] = @[]
   var visited = initHashSet[Value]()
@@ -93,4 +122,4 @@ proc backward*(self: Value) =
 
   self.grad = 1.0
   for i in countdown(high(topo), 0):
-    topo[i].backward()
+    topo[i].selfBackward()
