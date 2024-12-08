@@ -4,7 +4,7 @@ import std/[math, strformat]
 
 type Value* = ref object
   data*: float
-  grad: float = 0
+  grad*: float = 0
   #backward: proc ()
   prev: seq[Value]
   op: string

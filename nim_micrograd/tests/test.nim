@@ -40,4 +40,11 @@ var
 g += 10.0 / f
 
 assert &"{g.data:.4f}" == "24.7041"
-echo &"g = {g.data:.4f}" # prints 24.7041, the outcome of this forward pass
+echo &"g.data = {g.data:.4f}" # prints 24.7041, the outcome of this forward pass
+
+# g.backward()
+
+assert &"{a.grad:.4f}" == "138.8338"
+assert &"{b.grad:.4f}" == "645.5773"
+echo &"a.grad = {a.grad:.4f}" # prints 138.8338, i.e. the numerical value of dg/da
+echo &"b.grad = {b.grad:.4f}" # prints 645.5773, i.e. the numerical value of dg/db
