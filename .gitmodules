@@ -1,0 +1,6 @@
+[submodule "micrograd"]
+	path = micrograd
+	url = git@github.com:karpathy/micrograd.git
+[submodule "nn-zero-to-hero"]
+	path = nn-zero-to-hero
+	url = git@github.com:karpathy/nn-zero-to-hero.git
