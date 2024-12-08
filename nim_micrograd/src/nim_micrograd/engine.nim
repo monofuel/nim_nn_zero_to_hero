@@ -55,11 +55,7 @@ proc relu*(self: Value): Value =
   )
 
 proc `/`*(self, other: Value): Value =
-  result = Value(
-    data: self.data / other.data,
-    prev: @[self, other],
-    op: "/"
-  )
+  result = self * other.pow(-1)
 
 proc hash(x: Value): Hash =
   # Value is a ref object, assume uniqueness based on address
@@ -90,22 +86,11 @@ proc selfbackward*(res: Value) =
       other = res.prev[1]
     self.grad += other.data * res.grad
     other.grad += self.data * res.grad
-  of "/":
-    var
-      self = res.prev[0]
-      other = res.prev[1]
-    self.grad += res.grad / other.data
-    other.grad += -self.data * res.grad / other.data / other.data
   of "pow":
     var
       self = res.prev[0]
       other = res.prev[1]
-    #self.grad += other.data * self.data.pow(other.data - 1) * res.grad
-    #self.grad += (other * self.data**(other-1)) * out.grad
     self.grad += (other.data * self.data.pow(other.data - 1)) * res.grad
-    
-    # TODO: micrograd did not have this `other` line, but chatgpt suggests it.
-    #other.grad += self.data.pow(other.data) * log(self.data) * res.grad
   of "relu":
     var self = res.prev[0]
     self.grad = self.grad + (if res.data > 0: res.grad else: 0)
