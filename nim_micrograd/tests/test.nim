@@ -27,4 +27,6 @@ var
   c = a + b
   d = a * b + b.pow(3)
 
-c += c + 1
+discard c += c + 1
+
+echo $c
