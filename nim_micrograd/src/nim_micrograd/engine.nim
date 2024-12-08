@@ -48,6 +48,7 @@ proc `-`*(self, other: Value): Value =
   result = self + (-other)
 
 proc relu*(self: Value): Value =
+  ## relu, clamp negative values to 0
   result = Value(
     data: if self.data < 0: 0 else: self.data,
     prev: @[self],
@@ -58,6 +59,8 @@ proc `/`*(self, other: Value): Value =
   result = self * other.pow(-1)
 
 proc tanh*(self: Value): Value =
+  ## tanh activation function
+  ## smooth transition between -1 and 1
   let x = self.data
   let t = (math.exp(2 * x) - 1) / (math.exp(2 * x) + 1)
   result = Value(
@@ -67,10 +70,11 @@ proc tanh*(self: Value): Value =
   )
 
 proc hash(x: Value): Hash =
-  # Value is a ref object, assume uniqueness based on address
+  ## Value is a ref object, assume uniqueness based on address
   hash(cast[int](x))
 
 proc buildTopo(v: Value, topo: var seq[Value], visited: var HashSet[Value]) =
+  ## recursively build the list of unique notes, from top to bottom
   if v notin visited:
     visited.incl(v)
     for child in v.prev:
@@ -78,7 +82,7 @@ proc buildTopo(v: Value, topo: var seq[Value], visited: var HashSet[Value]) =
     topo.add v
 
 proc selfbackward*(res: Value) =
-  # backward pass for just the current node
+  ## backward pass for just the current node
   case res.op:
   of "+":
     var
@@ -86,9 +90,6 @@ proc selfbackward*(res: Value) =
       other = res.prev[1]
     self.grad += res.grad
     other.grad += res.grad
-  of "-":
-    # negate, does not affect gradient
-    discard
   of "*":
     var
       self = res.prev[0]
@@ -106,7 +107,9 @@ proc selfbackward*(res: Value) =
   of "tanh":
     var self = res.prev[0]
     self.grad = self.grad + (1 - res.data * res.data) * res.grad
-
+  of "-":
+    # negate, do nothing
+    discard
   of "":
     # scalar value, do nothing
     discard 
@@ -114,6 +117,7 @@ proc selfbackward*(res: Value) =
     raise newException(ValueError, "unknown op for backward: " & res.op)
 
 proc backward*(self: Value) =
+  ## perform a full backward pass
   var topo: seq[Value] = @[]
   var visited = initHashSet[Value]()
   buildTopo(self, topo, visited)
