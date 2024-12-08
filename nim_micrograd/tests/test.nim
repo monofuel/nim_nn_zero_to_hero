@@ -1,4 +1,4 @@
-import nim_micrograd/engine
+import nim_micrograd/engine, std/strformat
 
 # ```python
 # from micrograd.engine import Value
@@ -27,6 +27,17 @@ var
   c = a + b
   d = a * b + b.pow(3)
 
-discard c += c + 1
+c += c + 1
+c += 1 + c + (-a)
+d += d * 2 + (b + a).relu()
+d += 3 * d + (b - a).relu()
 
-echo $c
+var
+  e = c - d
+  f = e.pow(2)
+  g = f / 2.0
+
+g += 10.0 / f
+
+assert &"{g.data:.4f}" == "24.7041"
+echo &"g = {g.data:.4f}" # prints 24.7041, the outcome of this forward pass
