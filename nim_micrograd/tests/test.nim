@@ -31,3 +31,10 @@ assert &"{e.grad:.4f}" == "-6.9417"
 assert &"{d.grad:.4f}" == "6.9417"
 assert &"{a.grad:.4f}" == "138.8338"
 assert &"{b.grad:.4f}" == "645.5773"
+
+var
+  a2 = newValue(1)
+  b2 = a2 + a2
+b2.backward()
+echo &"a2.grad = {a2.grad:.4f}" # prints 2.0
+assert &"{a2.grad:.4f}" == "2.0000"
