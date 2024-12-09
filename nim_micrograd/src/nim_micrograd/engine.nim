@@ -69,6 +69,13 @@ proc tanh*(self: Value): Value =
     op: "tanh"
   )
 
+proc exp*(self: Value): Value =
+  result = Value(
+    data: math.exp(self.data),
+    prev: @[self],
+    op: "exp"
+  )
+
 proc hash(x: Value): Hash =
   ## Value is a ref object, assume uniqueness based on address
   hash(cast[int](x))
@@ -107,6 +114,9 @@ proc selfbackward*(res: Value) =
   of "tanh":
     var self = res.prev[0]
     self.grad = self.grad + (1 - res.data * res.data) * res.grad
+  of "exp":
+    var self = res.prev[0]
+    self.grad = self.grad + math.exp(res.data) * res.grad
   of "-":
     # negate, do nothing
     discard
