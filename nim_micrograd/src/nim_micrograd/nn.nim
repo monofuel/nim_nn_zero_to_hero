@@ -3,15 +3,13 @@ import std/[random, strformat, strutils, sequtils], engine
 
 type
   Module* = ref object of RootObj
-    grad: float
   Neuron* = ref object of Module
-    w: seq[Value]
-    b: Value
-    nonlin: bool
+    w*: seq[Value]
+    b*: Value
   Layer* = ref object of Module
-    neurons: seq[Neuron]
+    neurons*: seq[Neuron]
   MLP* = ref object of Module
-    layers: seq[Layer]
+    layers*: seq[Layer]
 
 
 proc zero_grad*[T](self: T) =
@@ -31,8 +29,6 @@ proc call*(n: Neuron, x: seq[Value]): Value =
   var y = n.b
   for i in 0 ..< len(n.w):
     y = y + n.w[i] * x[i]
-  if n.nonlin:
-    y = y.relu()
   return y
 
 proc parameters*(n: Neuron): seq[Value] =

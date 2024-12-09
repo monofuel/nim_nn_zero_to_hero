@@ -1,4 +1,8 @@
-import nim_micrograd/[engine, nn]
+import std/[strformat], nim_micrograd/[engine, nn]
+
+const
+  StepSize = 0.01
+  Iterations = 10
 
 var
   x = @[newValue(2.0), newValue(3.0), newValue(-1.0)]
@@ -27,6 +31,40 @@ echo "\n# Test MLP"
 var
   n = newMLP(3, @[4,4,1])
 
-
 echo $n
 echo $n.call(x)
+
+echo "\n# Test MLP training"
+
+var
+  xs = @[
+    @[newValue(2.0), newValue(3.0), newValue(-1.0)],
+    @[newValue(3.0), newValue(-1.0), newValue(0.5)],
+    @[newValue(0.5), newValue(1.0), newValue(1.0)],
+    @[newValue(1.0), newValue(1.0), newValue(-1.0)],
+  ]
+  ys = [newValue(1.0), newValue(-1.0), newValue(1.0)] # desired outputs
+
+for i in 0 ..< Iterations:
+  echo &"## Iteration {i}"
+
+  var ypred: seq[Value]
+
+  # forward pass for all examples
+  for x in xs:
+    ypred.add(n.call(x))
+
+  # sum the loss for all examples
+  var loss = newValue(0.0)
+  for i in 0 ..< len(ys):
+    loss = loss + (ypred[i] - ys[i]).pow(2)
+
+  echo &"loss = {loss}"
+
+  # run a backwards pass on the loss for all examples
+  loss.backward()
+
+  # update weights, and zero gradients
+  for p in n.parameters():
+    p.data = p.data - StepSize * p.grad
+  n.zero_grad()
