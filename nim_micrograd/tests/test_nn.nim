@@ -2,7 +2,7 @@ import std/[strformat], nim_micrograd/[engine, nn]
 
 const
   StepSize = 0.01
-  Iterations = 10
+  Iterations = 100
 
 var
   x = @[newValue(2.0), newValue(3.0), newValue(-1.0)]
@@ -54,6 +54,8 @@ for i in 0 ..< Iterations:
   for x in xs:
     ypred.add(n.call(x))
 
+  # echo ypred
+
   # sum the loss for all examples
   var loss = newValue(0.0)
   for i in 0 ..< len(ys):
@@ -68,3 +70,4 @@ for i in 0 ..< Iterations:
   for p in n.parameters():
     p.data = p.data - StepSize * p.grad
   n.zero_grad()
+  
