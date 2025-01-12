@@ -4,3 +4,6 @@
 [submodule "nn-zero-to-hero"]
 	path = nn-zero-to-hero
 	url = git@github.com:karpathy/nn-zero-to-hero.git
+[submodule "makemore"]
+	path = makemore
+	url = git@github.com:karpathy/makemore.git
