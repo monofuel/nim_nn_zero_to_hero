@@ -1,12 +1,6 @@
-import std/[math, sets, hashes, strformat]
+import std/[math, sets, hashes, strformat], types
 
-# Micrograd Engine
-
-type Value* = ref object
-  data*: float
-  grad*: float = 0
-  prev: seq[Value]
-  op: string
+## Micrograd Engine
 
 proc newValue*(data: float): Value =
   result = Value(data: data, grad: 0)

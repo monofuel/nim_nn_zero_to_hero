@@ -1,21 +1,6 @@
-import std/[random, strformat, strutils, sequtils], engine
+import std/[random, strformat, sequtils], ./[types, engine]
 
-type
-  Module* = ref object of RootObj
-    ## Base type for neural network modules
-
-  Neuron* = ref object of Module
-    ## Single neuron with weights and bias
-    w*: seq[Value]  ## Input weights
-    b*: Value       ## Bias
-
-  Layer* = ref object of Module
-    ## Layer of neurons
-    neurons*: seq[Neuron]  ## Neuron collection
-
-  MLP* = ref object of Module
-    ## Multi-Layer Perceptron
-    layers*: seq[Layer]    ## Network layers
+## Neural Network Operations
 
 proc zero_grad*[T](self: T) =
   ## Zeros all parameter gradients
@@ -25,76 +10,62 @@ proc zero_grad*[T](self: T) =
 ## Neuron Operations
 proc newNeuron*(nin: int): Neuron =
   ## Creates neuron with random weights (-1 to 1)
-  result = Neuron()
-  result.w = newSeq[Value](nin)
-  for i in 0 ..< nin:
-    result.w[i] = newValue(rand(2.0) - 1.0)
-  result.b = newValue(0.0)
+  Neuron(
+    w: newSeqWith(nin, newValue(rand(-1.0..1.0))),
+    b: newValue(0.0)
+  )
 
-proc call*(n: Neuron, x: seq[Value]): Value =
+proc forward*(n: Neuron, x: seq[Value]): Value =
   ## Computes weighted sum + bias
-  var y = n.b
-  for i in 0 ..< len(n.w):
-    y = y + n.w[i] * x[i]
-  return y
+  result = n.b
+  for i in 0..<n.w.len:
+    result = result + n.w[i] * x[i]
 
 proc parameters*(n: Neuron): seq[Value] =
   ## Returns bias and weights
-  result = @[n.b]
-  for w in n.w:
-    result.add(w)
+  n.w & n.b
 
 proc `$`*(n: Neuron): string =
   ## Shows weights and bias
-  return &"Neuron(w: {$n.w}, b: {$n.b})"
+  &"Neuron(w: {n.w}, b: {n.b})"
 
 ## Layer Operations
 proc newLayer*(nneurons, nin: int): Layer =
   ## Creates layer with nneurons, each with nin inputs
-  result = Layer()
-  result.neurons = newSeq[Neuron](nneurons)
-  for i in 0 ..< nneurons:
-    result.neurons[i] = newNeuron(nin)
+  Layer(
+    neurons: newSeqWith(nneurons, newNeuron(nin))
+  )
 
-proc call*(l: Layer, x: seq[Value]): seq[Value] =
+proc forward*(l: Layer, x: seq[Value]): seq[Value] =
   ## Computes outputs for all neurons
-  result = newSeq[Value](len(l.neurons))
-  for i in 0 ..< len(l.neurons):
-    result[i] = l.neurons[i].call(x)
-  return result
+  l.neurons.mapIt(it.forward(x))
 
 proc parameters*(l: Layer): seq[Value] =
   ## Returns all neuron parameters
-  result = @[]
-  for n in l.neurons:
-    result.add(n.parameters())
+  l.neurons.mapIt(it.parameters()).concat()
 
 proc `$`*(l: Layer): string =
   ## Shows layer neurons
-  return &"Layer(neurons: {$l.neurons})"
+  &"Layer(neurons: {l.neurons})"
 
 ## MLP Operations
 proc newMLP*(nin: int, nouts: seq[int]): MLP =
   ## Creates MLP with nin inputs and nouts layer sizes
-  result = MLP()
-  let sz = @[nin] & nouts
-  result.layers = newSeq[Layer](len(nouts))
-  for i in 0 ..< len(nouts):
-    result.layers[i] = newLayer(sz[i+1], sz[i])
+  let sizes = @[nin] & nouts
+  MLP(
+    layers: toSeq(0..<nouts.len).mapIt(newLayer(sizes[it+1], sizes[it]))
+  )
 
-proc call*(m: MLP, x: seq[Value]): seq[Value] =
+proc forward*(m: MLP, x: seq[Value]): seq[Value] =
   ## Computes output through all layers
-  var y = x
+  result = x
   for l in m.layers:
-    y = l.call(y)
-  return y
+    result = l.forward(result)
 
 proc parameters*(m: MLP): seq[Value] =
   ## Returns all layer parameters
-  result = @[]
-  for l in m.layers:
-    result.add(l.parameters())
+  m.layers.mapIt(it.parameters()).concat()
 
 proc `$`*(m: MLP): string =
   ## Shows MLP layers
-  return &"MLP(layers: {$m.layers})"
+  &"MLP(layers: {m.layers})"

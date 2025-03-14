@@ -1,4 +1,4 @@
-import std/[strformat], nim_micrograd/[engine, nn]
+import std/[strformat], nim_micrograd/[engine, types, nn]
 
 const
   StepSize = 0.01
@@ -10,7 +10,7 @@ var
 echo "\n# Test Neurons"
 var
   n1 = newNeuron(2)
-  y1 = n1.call(x)
+  y1 = n1.forward(x)
 echo $x
 echo $n1
 echo $y1
@@ -20,7 +20,7 @@ n1.zero_grad()
 echo "\n# Test Layers"
 var
   n2 = newLayer(3,2)
-  y2 = n2.call(x)
+  y2 = n2.forward(x)
 echo $n2
 echo $y2
 
@@ -32,7 +32,7 @@ var
   n = newMLP(3, @[4,4,1])
 
 echo $n
-echo $n.call(x)
+echo $n.forward(x)
 
 echo "\n# Test MLP training"
 
@@ -52,7 +52,7 @@ for i in 0 ..< Iterations:
 
   # forward pass for all examples
   for x in xs:
-    ypred.add(n.call(x))
+    ypred.add(n.forward(x))
 
   # echo ypred
 
