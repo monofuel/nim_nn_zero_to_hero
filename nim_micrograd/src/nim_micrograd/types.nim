@@ -1,20 +1,22 @@
 type
-  Value* = ref object
-    ## Represents a value with gradient tracking for autodiff
-    data*: float  ## Actual value
-    grad*: float = 0  ## Gradient (default 0)
-    prev*: seq[Value]  ## Previous values for backprop
-    op*: string  ## Operation that produced this value
+  Tensor*[T] = ref object
+    ## A tensor with variable dimensions and gradient tracking
+    data*: seq[T]             ## Flat buffer of values
+    shape*: seq[int]          ## Dimensions (e.g., @[27, 27])
+    grad*: seq[float]         ## Flat gradient buffer
+    gradShape*: seq[int]      ## Matches data shape
+    prev*: seq[Tensor[T]]## Computation graph
+    op*: string              ## Operation
 
-  Neuron* = ref object
+  Neuron*[T] = ref object
     ## Single neuron with weights and bias
-    w*: seq[Value]  ## Input weights
-    b*: Value       ## Bias
+    w*: seq[Tensor[T]]  ## Input weights
+    b*: Tensor[T]       ## Bias
 
-  Layer* = ref object
+  Layer*[T] = ref object
     ## Layer of neurons
-    neurons*: seq[Neuron]
+    neurons*: seq[Neuron[T]]
 
-  MLP* = ref object
+  MLP*[T] = ref object
     ## Multi-Layer Perceptron
-    layers*: seq[Layer]
+    layers*: seq[Layer[T]]

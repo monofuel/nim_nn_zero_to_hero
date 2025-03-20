@@ -2,7 +2,9 @@ import
   std/[os, strutils, sequtils, tables, algorithm, math],
   ./makemore, ../nim_micrograd/src/nim_micrograd/[nn, engine]
 
-
+# https://www.youtube.com/watch?v=PaCmpygFfXo&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=2
+# https://karpathy.ai/zero-to-hero.html
+# "building makemore"
 
 proc main() =
 
@@ -39,7 +41,11 @@ proc main() =
     for i in 0 .. min(9, sortedBigrams.len - 1):
       let (bigram, count) = sortedBigrams[i]
       echo "(", bigram[0], ", ", bigram[1], "): ", count
-  
+
+
+  # TODO next step
+  # make a torch tensor of 27,27 size of int32 with all zeros
+  # but instead use nim_micrograd
 
 when isMainModule:
   main()
