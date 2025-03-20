@@ -241,6 +241,14 @@ proc selfbackward*[T](res: Tensor[T]) =
     for i in 0..<res.grad.len:
       self.grad[i] += float(other.data[i]) * res.grad[i]
       other.grad[i] += float(self.data[i]) * res.grad[i]
+  of "/":  # Division
+    var
+      self = res.prev[0]   # Numerator (x)
+      other = res.prev[1]  # Denominator (y)
+    for i in 0..<res.grad.len:
+      let y = float(other.data[i])
+      self.grad[i] += res.grad[i] / y                    # ∂(x/y)/∂x = 1/y
+      other.grad[i] += -res.grad[i] * float(self.data[i]) / (y * y)  # ∂(x/y)/∂y = -x/y^2
   of "pow":
     var
       self = res.prev[0]
